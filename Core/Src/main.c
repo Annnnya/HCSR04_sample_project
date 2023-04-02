@@ -53,6 +53,8 @@ I2S_HandleTypeDef hi2s3;
 
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim2;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -65,6 +67,7 @@ static void MX_I2C1_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_TIM2_Init(void);
 void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
@@ -112,6 +115,32 @@ void myFmtFunction(const char *fmt, ...)
   // call myFunction
   SSD1306_Puts(msg, &Font_11x18, 1);
 }
+
+void main_cycle(){
+	 HAL_GPIO_WritePin(Trigger_GPIO_Port, Trigger_Pin, GPIO_PIN_SET);
+	 udelay_asm(16);
+	 HAL_GPIO_WritePin(Trigger_GPIO_Port, Trigger_Pin, GPIO_PIN_RESET);
+
+	 while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_RESET );
+	   {}
+	 uint32_t before = HAL_GetTick();
+	 while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_SET );
+	   {}
+	 uint32_t pulse_time = HAL_GetTick()-before;
+	 //! Увага, не забудьте додати:
+	 // monitor arm semihosting enable
+	 // До  Debug Configurations -> Startup Tab:
+	 //
+	 //SSD1306_Clear();
+	 SSD1306_GotoXY (10,15); // goto 10, 10
+	 myFmtFunction("%lu ms   ", pulse_time);
+
+	 SSD1306_GotoXY (10, 35);
+	 myFmtFunction("%lu cm   ", pulse_time*343/20);
+	 //SSD1306_Puts(("%lu cm", pulse_time*343/20), &Font_11x18, 1);
+	 //SSD1306_Puts ("WORLD !!", &Font_11x18, 1);
+	 SSD1306_UpdateScreen();
+}
 /* USER CODE END 0 */
 
 /**
@@ -150,8 +179,10 @@ int main(void)
   MX_I2S3_Init();
   MX_SPI1_Init();
   MX_USB_HOST_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   SSD1306_Init (); // initialize the display
+  HAL_TIM_Base_Start_IT(&htim2);
 
 
 //  for (uint16_t i; i<6;++i) {
@@ -167,31 +198,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
     while (1)
     {
-		 HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_SET);
-		 udelay_asm(16);
-		 HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
-
-		 while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_RESET );
-		   {}
-		 uint32_t before = HAL_GetTick();
-		 while(HAL_GPIO_ReadPin(ECHO_GPIO_Port, ECHO_Pin) == GPIO_PIN_SET );
-		   {}
-		 uint32_t pulse_time = HAL_GetTick()-before;
-		 //! Увага, не забудьте додати:
-		 // monitor arm semihosting enable
-		 // До  Debug Configurations -> Startup Tab:
-		 //
-		 //SSD1306_Clear();
-		 SSD1306_GotoXY (10,15); // goto 10, 10
-		 myFmtFunction("%lu ms   ", pulse_time);
-
-		 SSD1306_GotoXY (10, 35);
-		 myFmtFunction("%lu cm   ", pulse_time*343/20);
-		 //SSD1306_Puts(("%lu cm", pulse_time*343/20), &Font_11x18, 1);
-		 //SSD1306_Puts ("WORLD !!", &Font_11x18, 1);
-		 SSD1306_UpdateScreen(); // update screen
-		 HAL_Delay(10);
-
 
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
@@ -408,6 +414,51 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 9600-1;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 100;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -431,7 +482,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(OTG_FS_PowerSwitchOn_GPIO_Port, OTG_FS_PowerSwitchOn_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, LD4_Pin|LD3_Pin|TRIG_Pin|Audio_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, Trigger_Pin|LD4_Pin|LD3_Pin|Audio_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : DATA_Ready_Pin */
   GPIO_InitStruct.Pin = DATA_Ready_Pin;
@@ -465,8 +516,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD4_Pin LD3_Pin TRIG_Pin Audio_RST_Pin */
-  GPIO_InitStruct.Pin = LD4_Pin|LD3_Pin|TRIG_Pin|Audio_RST_Pin;
+  /*Configure GPIO pins : Trigger_Pin LD4_Pin LD3_Pin Audio_RST_Pin */
+  GPIO_InitStruct.Pin = Trigger_Pin|LD4_Pin|LD3_Pin|Audio_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -481,6 +532,14 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if(htim == &htim2)
+  {
+	main_cycle();
+  }
+}
+
 
 /* USER CODE END 4 */
 

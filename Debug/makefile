@@ -64,8 +64,8 @@ all: main-build
 main-build: HCSR04_Lab.elf secondary-outputs
 
 # Tool invocations
-HCSR04_Lab.elf HCSR04_Lab.map: $(OBJS) $(USER_OBJS) /Users/tymur/STM32CubeIDE/workspace_1.10.1/HCSR04_Lab/STM32F411VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "HCSR04_Lab.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/tymur/STM32CubeIDE/workspace_1.10.1/HCSR04_Lab/STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="HCSR04_Lab.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+HCSR04_Lab.elf HCSR04_Lab.map: $(OBJS) $(USER_OBJS) C:\Users\asus\progrexp\pok_proj\lab_dal\HCSR04_Lab\STM32F411VETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "HCSR04_Lab.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\asus\progrexp\pok_proj\lab_dal\HCSR04_Lab\STM32F411VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="HCSR04_Lab.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

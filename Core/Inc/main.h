@@ -87,12 +87,12 @@ void Error_Handler(void);
 #define SPI1_MOSI_GPIO_Port GPIOA
 #define CLK_IN_Pin GPIO_PIN_10
 #define CLK_IN_GPIO_Port GPIOB
+#define Trigger_Pin GPIO_PIN_11
+#define Trigger_GPIO_Port GPIOD
 #define LD4_Pin GPIO_PIN_12
 #define LD4_GPIO_Port GPIOD
 #define LD3_Pin GPIO_PIN_13
 #define LD3_GPIO_Port GPIOD
-#define TRIG_Pin GPIO_PIN_14
-#define TRIG_GPIO_Port GPIOD
 #define ECHO_Pin GPIO_PIN_15
 #define ECHO_GPIO_Port GPIOD
 #define I2S3_MCK_Pin GPIO_PIN_7
